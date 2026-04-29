@@ -1,4 +1,5 @@
 using BossGearSynthesis.Gear;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
@@ -23,11 +24,14 @@ public class OutfitPatcher
         newOutfit.EditorID = $"BossGear_OTFT_{Slug(boss)}";
 
         var oldKey = pick.Item.FormKey;
-        for (int i = 0; i < newOutfit.Items.Count; i++)
+        if (newOutfit.Items is { } items)
         {
-            if (newOutfit.Items[i].FormKey == oldKey)
+            for (int i = 0; i < items.Count; i++)
             {
-                newOutfit.Items[i] = new FormLink<IOutfitTargetGetter>(newItem.FormKey);
+                if (items[i].FormKey == oldKey)
+                {
+                    items[i] = new FormLink<IOutfitTargetGetter>(newItem.FormKey);
+                }
             }
         }
 

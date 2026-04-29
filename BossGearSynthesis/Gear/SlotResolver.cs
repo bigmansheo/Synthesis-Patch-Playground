@@ -30,6 +30,7 @@ public class SlotResolver
 
         // Resolve every armor in the outfit, indexed by the slot it occupies.
         var bySlot = new Dictionary<BipedObjectFlag, IArmorGetter>();
+        if (outfit.Items is null) return null;
         foreach (var itemLink in outfit.Items)
         {
             if (!state.LinkCache.TryResolve<IArmorGetter>(itemLink.FormKey, out var armor)) continue;
