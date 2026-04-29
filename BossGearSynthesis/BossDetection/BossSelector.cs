@@ -47,6 +47,11 @@ public class BossSelector
         if (_explicitAllow.Contains(npc.FormKey)) return true;
         if (_namedUniqueAllow.Contains(npc.FormKey)) return true;
 
+        // In curated-only mode the explicit + named-unique allowlists are the entire roster.
+        // The broad heuristics (unique flag / race / keyword) were sweeping in every named
+        // vanilla and modded NPC, so they're gated behind an opt-out toggle.
+        if (_settings.BossDetection.RestrictToCuratedList) return false;
+
         if (_settings.BossDetection.UseUniqueFlag &&
             (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
             HasName(npc))

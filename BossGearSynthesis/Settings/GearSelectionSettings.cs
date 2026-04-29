@@ -1,3 +1,4 @@
+using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis.Settings;
 
@@ -8,6 +9,12 @@ public enum MaterialUpgradeMode
     Off,
     SisterSet,
     StrongerInFamily,
+}
+
+public enum NoSlotFallbackKind
+{
+    Ring,
+    Amulet,
 }
 
 public class GearSelectionSettings
@@ -35,4 +42,21 @@ public class GearSelectionSettings
     [SynthesisSettingName("Value bump per 10 magnitude")]
     [SynthesisTooltip("Cosmetic loot value bump.")]
     public int ValueBumpPer10Magnitude = 50;
+
+    [SynthesisSettingName("Drop ring/amulet for slot-less enemies")]
+    [SynthesisTooltip(
+        "Bosses without any wearable armor in their outfit (e.g. dragons) get a synthesized " +
+        "ring or amulet appended to their outfit instead of being skipped.")]
+    public bool EnableNoSlotFallback = true;
+
+    [SynthesisSettingName("Slot-less fallback: prefer")]
+    public NoSlotFallbackKind NoSlotFallbackKind = NoSlotFallbackKind.Ring;
+
+    [SynthesisSettingName("Slot-less fallback: base ring")]
+    [SynthesisTooltip("Vanilla armor record cloned for the synthesized ring.")]
+    public FormLink<IArmorGetter> NoSlotFallbackRing = new();
+
+    [SynthesisSettingName("Slot-less fallback: base amulet")]
+    [SynthesisTooltip("Vanilla armor record cloned for the synthesized amulet.")]
+    public FormLink<IArmorGetter> NoSlotFallbackAmulet = new();
 }

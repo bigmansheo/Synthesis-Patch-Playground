@@ -5,7 +5,16 @@ using Mutagen.Bethesda.Synthesis;
 
 namespace BossGearSynthesis.Gear;
 
-public record SlotPick(BipedObjectFlag Slot, IArmorGetter Item, IOutfitGetter Outfit);
+/// <summary>
+/// Describes which armor in the boss's outfit will be replaced (or, when
+/// <see cref="AppendInsteadOfReplace"/> is true, what new piece will be appended
+/// to the outfit because the boss had no wearable slot at all).
+/// </summary>
+public record SlotPick(
+    BipedObjectFlag Slot,
+    IArmorGetter Item,
+    IOutfitGetter Outfit,
+    bool AppendInsteadOfReplace = false);
 
 public class SlotResolver
 {
@@ -36,7 +45,28 @@ public class SlotResolver
             if (!_settings.GearSelection.OverwriteEnchanted && !armor.ObjectEffect.IsNull) continue;
             return new SlotPick(preferred, armor, outfit);
         }
+
+        // No wearable slot resolved (e.g. dragons whose outfit only contains crafting drops).
+        // Append a ring or amulet based on the configured fallback so the boss still drops something.
+        if (_settings.GearSelection.EnableNoSlotFallback)
+        {
+            return BuildFallbackPick(outfit, state);
+        }
+
         return null;
+    }
+
+    private SlotPick? BuildFallbackPick(IOutfitGetter outfit, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+    {
+        var kind = _settings.GearSelection.NoSlotFallbackKind;
+        var link = kind == NoSlotFallbackKind.Amulet
+            ? _settings.GearSelection.NoSlotFallbackAmulet
+            : _settings.GearSelection.NoSlotFallbackRing;
+        if (link.IsNull) return null;
+        if (!state.LinkCache.TryResolve<IArmorGetter>(link.FormKey, out var baseArmor)) return null;
+
+        var slot = kind == NoSlotFallbackKind.Amulet ? BipedObjectFlag.Amulet : BipedObjectFlag.Ring;
+        return new SlotPick(slot, baseArmor, outfit, AppendInsteadOfReplace: true);
     }
 
     private static IEnumerable<BipedObjectFlag> EnumerateSlots(BipedObjectFlag flags)

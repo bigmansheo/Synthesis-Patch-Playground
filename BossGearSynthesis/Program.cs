@@ -54,7 +54,11 @@ public class Program
             var pick = slotResolver.PickSlot(boss, state);
             if (pick is null) { report.Skipped(boss, "no eligible outfit slot"); continue; }
 
-            var baseArmor = matcher.Choose(pick.Item, pick.Slot, state);
+            // Skip material matching for the slot-less fallback: the base is a
+            // stock ring/amulet we picked ourselves, not something to be re-rolled.
+            var baseArmor = pick.AppendInsteadOfReplace
+                ? pick.Item
+                : matcher.Choose(pick.Item, pick.Slot, state);
             var primaryMag = MagnitudeFormula.ComputePrimary(profile, settings.MagnitudeScaling);
 
             if (settings.Output.DryRun)
@@ -93,6 +97,11 @@ public class Program
             settings.AhzidalSpecial.Ahzidal = new FormLink<INpcGetter>(NamedUniqueAllowlist.Ahzidal);
         if (settings.AhzidalSpecial.ExtraEffectMgef.IsNull)
             settings.AhzidalSpecial.ExtraEffectMgef = new FormLink<IMagicEffectGetter>(NamedUniqueAllowlist.FortifyEnchantingMgef);
+
+        if (settings.GearSelection.NoSlotFallbackRing.IsNull)
+            settings.GearSelection.NoSlotFallbackRing = new FormLink<IArmorGetter>(NamedUniqueAllowlist.GoldRing);
+        if (settings.GearSelection.NoSlotFallbackAmulet.IsNull)
+            settings.GearSelection.NoSlotFallbackAmulet = new FormLink<IArmorGetter>(NamedUniqueAllowlist.GoldNecklace);
     }
 
     private static string Suffix(INpcGetter npc) =>

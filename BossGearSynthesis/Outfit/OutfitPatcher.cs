@@ -17,12 +17,21 @@ public class OutfitPatcher
         var newOutfit = state.PatchMod.Outfits.DuplicateInAsNewRecord(pick.Outfit);
         newOutfit.EditorID = $"BossGear_OTFT_{Slug(boss)}";
 
-        var oldKey = pick.Item.FormKey;
-        for (int i = 0; i < newOutfit.Items.Count; i++)
+        if (pick.AppendInsteadOfReplace)
         {
-            if (newOutfit.Items[i].FormKey == oldKey)
+            // Slot-less fallback: the base item is a stock ring/amulet that wasn't in the outfit.
+            // Append the synth piece so the boss drops it on death.
+            newOutfit.Items.Add(new FormLink<IOutfitTargetGetter>(newItem.FormKey));
+        }
+        else
+        {
+            var oldKey = pick.Item.FormKey;
+            for (int i = 0; i < newOutfit.Items.Count; i++)
             {
-                newOutfit.Items[i] = new FormLink<IOutfitTargetGetter>(newItem.FormKey);
+                if (newOutfit.Items[i].FormKey == oldKey)
+                {
+                    newOutfit.Items[i] = new FormLink<IOutfitTargetGetter>(newItem.FormKey);
+                }
             }
         }
 
