@@ -17,6 +17,7 @@ public class BossSelector
     private readonly HashSet<FormKey> _keywordAllow;
     private readonly string[] _editorIdPrefixes;
     private readonly HashSet<string> _trustedModKeys;
+    private readonly HashSet<string> _pluginSourceAllow;
 
     public BossSelector(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, Settings.Settings settings)
     {
@@ -31,9 +32,8 @@ public class BossSelector
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Select(p => p.Trim())
             .ToArray();
-        _trustedModKeys = new HashSet<string>(
-            settings.BossDetection.TrustedUniqueModKeys.Where(s => !string.IsNullOrWhiteSpace(s)),
-            StringComparer.OrdinalIgnoreCase);
+        _trustedModKeys = ToModKeySet(settings.BossDetection.TrustedUniqueModKeys);
+        _pluginSourceAllow = ToModKeySet(settings.BossDetection.PluginSourceAllowlist);
     }
 
     public IEnumerable<INpcGetter> Select()
@@ -42,12 +42,22 @@ public class BossSelector
         foreach (var npc in _state.LoadOrder.PriorityOrder.Npc().WinningOverrides())
         {
             if (_explicitBlock.Contains(npc.FormKey)) continue;
+            if (!IsFromAllowedPlugin(npc)) continue;
             if (IsBoss(npc)) bosses.Add(npc);
         }
         // Deterministic order
         return bosses.OrderBy(n => n.FormKey.ModKey.FileName.String, StringComparer.OrdinalIgnoreCase)
                      .ThenBy(n => n.FormKey.ID);
     }
+
+    private bool IsFromAllowedPlugin(INpcGetter npc)
+    {
+        if (_pluginSourceAllow.Count == 0) return true;
+        return _pluginSourceAllow.Contains(npc.FormKey.ModKey.FileName.String);
+    }
+
+    private static HashSet<string> ToModKeySet(IEnumerable<string> values) =>
+        new(values.Where(s => !string.IsNullOrWhiteSpace(s)), StringComparer.OrdinalIgnoreCase);
 
     public bool IsNamedUnique(INpcGetter npc) => _namedUniqueAllow.Contains(npc.FormKey);
 

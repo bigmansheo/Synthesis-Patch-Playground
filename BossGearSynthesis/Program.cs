@@ -5,9 +5,7 @@ using BossGearSynthesis.Enchantments;
 using BossGearSynthesis.Gear;
 using BossGearSynthesis.Logging;
 using BossGearSynthesis.Outfit;
-using BossGearSynthesis.Settings;
 using Mutagen.Bethesda;
-using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
 
@@ -32,7 +30,7 @@ public class Program
     public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
     {
         var settings = _settings.Value;
-        SeedDefaults(settings);
+        SettingsDefaults.Apply(settings);
 
         var selector = new BossSelector(state, settings);
         var classifier = new TierClassifier(settings);
@@ -56,10 +54,11 @@ public class Program
 
             var baseArmor = matcher.Choose(pick.Item, pick.Slot, state);
             var primaryMag = MagnitudeFormula.ComputePrimary(profile, settings.MagnitudeScaling);
+            var resolvedPick = pick with { Item = baseArmor };
 
             if (settings.Output.DryRun)
             {
-                report.Patched(boss, profile, pick with { Item = baseArmor }, primaryMag);
+                report.Patched(boss, profile, resolvedPick, primaryMag);
                 continue;
             }
 
@@ -67,8 +66,8 @@ public class Program
             if (ench is null) { report.Skipped(boss, "no MGEF for top combat skill"); continue; }
 
             var item = itemBuilder.Build(state, boss, baseArmor, ench, profile, primaryMag);
-            outfitPatcher.Apply(state, boss, pick with { Item = baseArmor }, item);
-            report.Patched(boss, profile, pick with { Item = baseArmor }, primaryMag);
+            outfitPatcher.Apply(state, boss, resolvedPick, item);
+            report.Patched(boss, profile, resolvedPick, primaryMag);
 
             if (settings.Output.VerboseLog)
                 Console.WriteLine($"[BossGear] {boss.Name?.String ?? boss.EditorID} -> {profile.TopCombatSkill} {primaryMag:F1}");
@@ -76,38 +75,6 @@ public class Program
 
         var reportPath = Path.Combine(state.DataFolderPath, settings.Output.ReportFileName);
         try { report.Write(reportPath); } catch { /* best effort */ }
-    }
-
-    private static void SeedDefaults(Settings.Settings settings)
-    {
-        if (settings.EffectMap.SkillEffects.Count == 0)
-            settings.EffectMap.SkillEffects = EffectMapDefaults.BuildSkillDefaults();
-        if (settings.EffectMap.AttributeEffects.Count == 0)
-            settings.EffectMap.AttributeEffects = EffectMapDefaults.BuildAttributeDefaults();
-
-        if (settings.BossDetection.NamedUniqueAllowlist.Count == 0)
-            foreach (var fk in NamedUniqueAllowlist.FormKeys)
-                settings.BossDetection.NamedUniqueAllowlist.Add(new FormLink<INpcGetter>(fk));
-
-        if (settings.BossDetection.EditorIdPrefixWhitelist.Count == 0)
-            settings.BossDetection.EditorIdPrefixWhitelist.AddRange(BossWhitelistDefaults.EditorIdPrefixes);
-
-        if (settings.BossDetection.RaceAllowlist.Count == 0)
-            foreach (var fk in BossWhitelistDefaults.Races)
-                settings.BossDetection.RaceAllowlist.Add(new FormLink<IRaceGetter>(fk));
-
-        if (settings.BossDetection.TrustedUniqueModKeys.Count == 0)
-            settings.BossDetection.TrustedUniqueModKeys.AddRange(BossWhitelistDefaults.TrustedUniqueModKeys);
-
-        if (settings.GearSelection.FallbackRingBase.IsNull)
-            settings.GearSelection.FallbackRingBase = new FormLink<IArmorGetter>(BossWhitelistDefaults.GoldRing);
-        if (settings.GearSelection.FallbackAmuletBase.IsNull)
-            settings.GearSelection.FallbackAmuletBase = new FormLink<IArmorGetter>(BossWhitelistDefaults.GoldNecklace);
-
-        if (settings.AhzidalSpecial.Ahzidal.IsNull)
-            settings.AhzidalSpecial.Ahzidal = new FormLink<INpcGetter>(NamedUniqueAllowlist.Ahzidal);
-        if (settings.AhzidalSpecial.ExtraEffectMgef.IsNull)
-            settings.AhzidalSpecial.ExtraEffectMgef = new FormLink<IMagicEffectGetter>(NamedUniqueAllowlist.FortifyEnchantingMgef);
     }
 
     private static string Suffix(INpcGetter npc) =>

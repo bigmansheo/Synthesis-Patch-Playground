@@ -10,12 +10,13 @@ public class BossDetectionSettings
     [SynthesisTooltip("When on, only NPCs that match the explicit allowlist, named-unique allowlist, race allowlist, keyword allowlist, or EditorID prefix whitelist are patched. Disables broad unique-flag matching so modded named NPCs are not touched.")]
     public bool UseDefaultWhitelistOnly = true;
 
-    [SynthesisSettingName("Use encounter-zone boss flag")]
-    public bool UseEncounterZoneFlag = true;
-
     [SynthesisSettingName("Use NPC unique flag")]
     [SynthesisTooltip("When on, named-unique NPCs are treated as bosses. With 'Use default whitelist only' enabled, this is restricted to NPCs originating from the trusted mod-keys list below so modded named NPCs are not touched.")]
     public bool UseUniqueFlag = true;
+
+    [SynthesisSettingName("Source plugins (NPC scan scope)")]
+    [SynthesisTooltip("Limit boss detection to NPCs that originate from these plugins. Leave empty to scan ALL loaded plugins (default). Use this to source bosses only from specific overhauls (e.g. OBIS, MorrowLoot) or to keep vanilla-only.")]
+    public List<string> PluginSourceAllowlist = new();
 
     [SynthesisSettingName("Trusted mod keys for unique-flag matching")]
     [SynthesisTooltip("When the default whitelist is on, unique-flag matching only fires for NPCs whose master is one of these plugins. Defaults to vanilla + official DLC.")]

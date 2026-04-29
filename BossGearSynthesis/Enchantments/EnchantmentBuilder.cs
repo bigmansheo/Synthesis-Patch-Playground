@@ -28,8 +28,9 @@ public class EnchantmentBuilder
         var primary = _map.ForSkill(profile.TopCombatSkill);
         if (primary is null) return null;
 
-        var primaryMag = MagnitudeFormula.ComputePrimary(profile, _settings.MagnitudeScaling) * primary.Value.Multiplier;
-        var secondaryMag = MagnitudeFormula.ComputeSecondary(primaryMag, _settings.MagnitudeScaling);
+        var basePrimary = MagnitudeFormula.ComputePrimary(profile, _settings.MagnitudeScaling);
+        var baseSecondary = MagnitudeFormula.ComputeSecondary(basePrimary, _settings.MagnitudeScaling);
+        var primaryMag = basePrimary * primary.Value.Multiplier;
 
         var ench = state.PatchMod.ObjectEffects.AddNew("BossGear_ENCH_" + editorIdSuffix);
         ench.Name = "Boss Gear Enchantment";
@@ -44,46 +45,37 @@ public class EnchantmentBuilder
 
         ench.Effects.Add(MakeEffect(primary.Value.Mgef, primaryMag));
 
-        var second = ResolveSecondEffect(profile);
+        var second = ResolveSecondEffect(profile, baseSecondary);
         if (second is not null)
             ench.Effects.Add(MakeEffect(second.Value.mgef, second.Value.magnitude));
 
-        bool isAhzidal = _settings.AhzidalSpecial.Enabled
-            && (boss.FormKey == ResolveAhzidalKey());
-
-        if (isAhzidal)
+        if (_settings.AhzidalSpecial.Enabled && boss.FormKey == ResolveAhzidalKey())
         {
             var extraMgef = _settings.AhzidalSpecial.ExtraEffectMgef.IsNull
                 ? NamedUniqueAllowlist.FortifyEnchantingMgef
                 : _settings.AhzidalSpecial.ExtraEffectMgef.FormKey;
             ench.Effects.Add(MakeEffect(extraMgef, _settings.AhzidalSpecial.Magnitude));
-            // Make non-disenchantable: BaseEnchantment must point to another ENCH.
-            // Pointing at self is the simplest mechanism that the engine treats as
-            // "disenchanting would yield this same enchantment", which it refuses.
+            // Pointing BaseEnchantment at self makes the engine refuse to disenchant.
             ench.BaseEnchantment.SetTo(ench.FormKey);
         }
 
         return ench;
     }
 
-    private (FormKey mgef, float magnitude)? ResolveSecondEffect(BossStrengthProfile profile)
+    private (FormKey mgef, float magnitude)? ResolveSecondEffect(BossStrengthProfile profile, float baseSecondary)
     {
         if (profile.UseAttributeForEffect2 && profile.TopAttribute is { } attr)
         {
             var lookup = _map.ForAttribute(attr);
             if (lookup is null) return null;
-            var primaryMag = MagnitudeFormula.ComputePrimary(profile, _settings.MagnitudeScaling);
-            var secondaryMag = MagnitudeFormula.ComputeSecondary(primaryMag, _settings.MagnitudeScaling);
-            secondaryMag = MagnitudeFormula.ApplyAttributeMultiplier(secondaryMag, attr, _settings.MagnitudeScaling);
-            return (lookup.Value.Mgef, secondaryMag * lookup.Value.Multiplier);
+            var mag = MagnitudeFormula.ApplyAttributeMultiplier(baseSecondary, attr, _settings.MagnitudeScaling);
+            return (lookup.Value.Mgef, mag * lookup.Value.Multiplier);
         }
         if (profile.SecondSkill is { } sk)
         {
             var lookup = _map.ForSkill(sk);
             if (lookup is null) return null;
-            var primaryMag = MagnitudeFormula.ComputePrimary(profile, _settings.MagnitudeScaling);
-            var secondaryMag = MagnitudeFormula.ComputeSecondary(primaryMag, _settings.MagnitudeScaling);
-            return (lookup.Value.Mgef, secondaryMag * lookup.Value.Multiplier);
+            return (lookup.Value.Mgef, baseSecondary * lookup.Value.Multiplier);
         }
         return null;
     }

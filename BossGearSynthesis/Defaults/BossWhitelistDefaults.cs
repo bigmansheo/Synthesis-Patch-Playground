@@ -5,6 +5,12 @@ namespace BossGearSynthesis.Defaults;
 /// <summary>
 /// Defaults for the curated boss whitelist: generic encounter templates by EditorID prefix,
 /// race FormKeys for slot-less bosses, and base jewelry items used as ring/amulet fallbacks.
+///
+/// All defaults here are load-order independent:
+/// - EditorID prefixes are case-insensitive string matches that work regardless of plugin position.
+/// - FormKeys are anchored to a plugin filename (e.g. "Skyrim.esm"), so they resolve to the same
+///   record in the user's load order regardless of where the plugin sits.
+/// - Trusted mod keys are matched by filename, not by load-order index.
 /// </summary>
 public static class BossWhitelistDefaults
 {
@@ -75,6 +81,9 @@ public static class BossWhitelistDefaults
         // Dwemer
         "EncDwarvenCenturion",
         "DwarvenCenturion",
+
+        // Werewolves and other beast bosses
+        "EncWerewolfBoss",
     };
 
     /// <summary>
