@@ -47,6 +47,11 @@ public class BossSelector
         if (_explicitAllow.Contains(npc.FormKey)) return true;
         if (_namedUniqueAllow.Contains(npc.FormKey)) return true;
 
+        // Strict mode: only the curated allowlist + explicit allowlist count.
+        // This prevents the patcher from picking up every named/unique NPC
+        // (vanilla quest givers, modded followers, etc.).
+        if (_settings.BossDetection.StrictBossesOnly) return false;
+
         if (_settings.BossDetection.UseUniqueFlag &&
             (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
             HasName(npc))

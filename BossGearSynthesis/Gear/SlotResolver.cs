@@ -5,7 +5,7 @@ using Mutagen.Bethesda.Synthesis;
 
 namespace BossGearSynthesis.Gear;
 
-public record SlotPick(BipedObjectFlag Slot, IArmorGetter Item, IOutfitGetter Outfit);
+public record SlotPick(BipedObjectFlag Slot, IArmorGetter Item, IOutfitGetter? Outfit);
 
 public class SlotResolver
 {

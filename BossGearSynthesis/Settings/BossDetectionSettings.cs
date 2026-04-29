@@ -6,10 +6,20 @@ namespace BossGearSynthesis.Settings;
 
 public class BossDetectionSettings
 {
+    [SynthesisSettingName("Strict bosses only (recommended)")]
+    [SynthesisTooltip("When ON, only NPCs in the named-unique allowlist or explicit allowlist are patched. " +
+                      "This matches the curated wiki list of Skyrim bosses (Dragon Priests, Harkon, Miraak, etc.) " +
+                      "and prevents the patcher from latching onto every named NPC, modded follower, or quest character. " +
+                      "Turn OFF to fall back to the legacy heuristic (unique flag / race / keyword detection).")]
+    public bool StrictBossesOnly = true;
+
     [SynthesisSettingName("Use encounter-zone boss flag")]
+    [SynthesisTooltip("Ignored when 'Strict bosses only' is ON.")]
     public bool UseEncounterZoneFlag = true;
 
     [SynthesisSettingName("Use NPC unique flag")]
+    [SynthesisTooltip("Ignored when 'Strict bosses only' is ON. Catches every named/unique NPC in the load order, " +
+                      "including modded ones, which is usually too broad.")]
     public bool UseUniqueFlag = true;
 
     [SynthesisSettingName("Race allowlist")]

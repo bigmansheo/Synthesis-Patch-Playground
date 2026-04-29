@@ -52,7 +52,15 @@ public class Program
             if (profile is null) { report.Skipped(boss, "no skills resolved"); continue; }
 
             var pick = slotResolver.PickSlot(boss, state);
-            if (pick is null) { report.Skipped(boss, "no eligible outfit slot"); continue; }
+            if (pick is null)
+            {
+                if (TryJewelryFallback(state, settings, boss, profile,
+                        enchBuilder, itemBuilder, outfitPatcher, report))
+                    continue;
+
+                report.Skipped(boss, "no eligible outfit slot");
+                continue;
+            }
 
             var baseArmor = matcher.Choose(pick.Item, pick.Slot, state);
             var primaryMag = MagnitudeFormula.ComputePrimary(profile, settings.MagnitudeScaling);
@@ -97,4 +105,58 @@ public class Program
 
     private static string Suffix(INpcGetter npc) =>
         (npc.EditorID ?? npc.FormKey.ID.ToString("X8")).Replace(" ", "_");
+
+    private static bool TryJewelryFallback(
+        IPatcherState<ISkyrimMod, ISkyrimModGetter> state,
+        Settings.Settings settings,
+        INpcGetter boss,
+        BossStrengthProfile profile,
+        EnchantmentBuilder enchBuilder,
+        ItemBuilder itemBuilder,
+        OutfitPatcher outfitPatcher,
+        DryRunReport report)
+    {
+        if (!settings.GearSelection.JewelryFallbackEnabled) return false;
+
+        var (slot, baseKey) = settings.GearSelection.JewelryFallbackKind switch
+        {
+            JewelryFallbackKind.Amulet => (
+                BipedObjectFlag.Amulet,
+                settings.GearSelection.JewelryFallbackAmulet.IsNull
+                    ? NamedUniqueAllowlist.FallbackAmulet
+                    : settings.GearSelection.JewelryFallbackAmulet.FormKey),
+            _ => (
+                BipedObjectFlag.Ring,
+                settings.GearSelection.JewelryFallbackRing.IsNull
+                    ? NamedUniqueAllowlist.FallbackRing
+                    : settings.GearSelection.JewelryFallbackRing.FormKey),
+        };
+
+        if (!state.LinkCache.TryResolve<IArmorGetter>(baseKey, out var baseArmor))
+        {
+            report.Skipped(boss, "jewelry fallback base not found");
+            return true;
+        }
+
+        var pick = new SlotPick(slot, baseArmor, null);
+        var primaryMag = MagnitudeFormula.ComputePrimary(profile, settings.MagnitudeScaling);
+
+        if (settings.Output.DryRun)
+        {
+            report.Patched(boss, profile, pick, primaryMag);
+            return true;
+        }
+
+        var ench = enchBuilder.Build(state, boss, profile, Suffix(boss));
+        if (ench is null) { report.Skipped(boss, "no MGEF for top combat skill"); return true; }
+
+        var item = itemBuilder.Build(state, boss, baseArmor, ench, profile, primaryMag);
+        outfitPatcher.AddToInventory(state, boss, item);
+        report.Patched(boss, profile, pick, primaryMag);
+
+        if (settings.Output.VerboseLog)
+            Console.WriteLine($"[BossGear] {boss.Name?.String ?? boss.EditorID} -> {profile.TopCombatSkill} {primaryMag:F1} (jewelry fallback)");
+
+        return true;
+    }
 }
