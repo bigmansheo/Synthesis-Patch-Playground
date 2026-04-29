@@ -15,6 +15,8 @@ public class BossSelector
     private readonly HashSet<FormKey> _namedUniqueAllow;
     private readonly HashSet<FormKey> _raceAllow;
     private readonly HashSet<FormKey> _keywordAllow;
+    private readonly string[] _editorIdPrefixes;
+    private readonly HashSet<string> _trustedModKeys;
 
     public BossSelector(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, Settings.Settings settings)
     {
@@ -25,6 +27,13 @@ public class BossSelector
         _namedUniqueAllow = settings.BossDetection.NamedUniqueAllowlist.Select(l => l.FormKey).ToHashSet();
         _raceAllow = settings.BossDetection.RaceAllowlist.Select(l => l.FormKey).ToHashSet();
         _keywordAllow = settings.BossDetection.KeywordAllowlist.Select(l => l.FormKey).ToHashSet();
+        _editorIdPrefixes = settings.BossDetection.EditorIdPrefixWhitelist
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .ToArray();
+        _trustedModKeys = new HashSet<string>(
+            settings.BossDetection.TrustedUniqueModKeys.Where(s => !string.IsNullOrWhiteSpace(s)),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     public IEnumerable<INpcGetter> Select()
@@ -47,18 +56,33 @@ public class BossSelector
         if (_explicitAllow.Contains(npc.FormKey)) return true;
         if (_namedUniqueAllow.Contains(npc.FormKey)) return true;
 
-        if (_settings.BossDetection.UseUniqueFlag &&
-            (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
-            HasName(npc))
-            return true;
-
         if (_raceAllow.Count > 0 && !npc.Race.IsNull && _raceAllow.Contains(npc.Race.FormKey))
             return true;
 
         if (_keywordAllow.Count > 0 && npc.Keywords is { } kws && kws.Any(k => _keywordAllow.Contains(k.FormKey)))
             return true;
 
+        if (_editorIdPrefixes.Length > 0 && npc.EditorID is { } eid)
+        {
+            foreach (var prefix in _editorIdPrefixes)
+                if (eid.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    return true;
+        }
+
+        if (_settings.BossDetection.UseUniqueFlag &&
+            (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
+            HasName(npc) &&
+            UniqueFlagAllowed(npc))
+            return true;
+
         return false;
+    }
+
+    private bool UniqueFlagAllowed(INpcGetter npc)
+    {
+        if (!_settings.BossDetection.UseDefaultWhitelistOnly) return true;
+        if (_trustedModKeys.Count == 0) return true;
+        return _trustedModKeys.Contains(npc.FormKey.ModKey.FileName.String);
     }
 
     private static bool HasName(INpcGetter npc) =>

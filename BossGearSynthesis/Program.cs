@@ -89,6 +89,21 @@ public class Program
             foreach (var fk in NamedUniqueAllowlist.FormKeys)
                 settings.BossDetection.NamedUniqueAllowlist.Add(new FormLink<INpcGetter>(fk));
 
+        if (settings.BossDetection.EditorIdPrefixWhitelist.Count == 0)
+            settings.BossDetection.EditorIdPrefixWhitelist.AddRange(BossWhitelistDefaults.EditorIdPrefixes);
+
+        if (settings.BossDetection.RaceAllowlist.Count == 0)
+            foreach (var fk in BossWhitelistDefaults.Races)
+                settings.BossDetection.RaceAllowlist.Add(new FormLink<IRaceGetter>(fk));
+
+        if (settings.BossDetection.TrustedUniqueModKeys.Count == 0)
+            settings.BossDetection.TrustedUniqueModKeys.AddRange(BossWhitelistDefaults.TrustedUniqueModKeys);
+
+        if (settings.GearSelection.FallbackRingBase.IsNull)
+            settings.GearSelection.FallbackRingBase = new FormLink<IArmorGetter>(BossWhitelistDefaults.GoldRing);
+        if (settings.GearSelection.FallbackAmuletBase.IsNull)
+            settings.GearSelection.FallbackAmuletBase = new FormLink<IArmorGetter>(BossWhitelistDefaults.GoldNecklace);
+
         if (settings.AhzidalSpecial.Ahzidal.IsNull)
             settings.AhzidalSpecial.Ahzidal = new FormLink<INpcGetter>(NamedUniqueAllowlist.Ahzidal);
         if (settings.AhzidalSpecial.ExtraEffectMgef.IsNull)
