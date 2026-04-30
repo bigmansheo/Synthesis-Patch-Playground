@@ -60,6 +60,7 @@ public class BossSelector
 
     private bool IsBoss(INpcGetter npc)
     {
+        // Curated whitelist matchers — always active.
         if (_explicitAllow.Contains(npc.FormKey)) return true;
         if (_namedUniqueAllow.Contains(npc.FormKey)) return true;
 
@@ -72,18 +73,16 @@ public class BossSelector
         if (WhitelistMatcher.MatchesEditorIdPrefix(npc.EditorID, _editorIdPrefixes))
             return true;
 
-        if (_settings.BossDetection.UseUniqueFlag &&
-            (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
-            HasName(npc) &&
-            UniqueFlagAllowed(npc))
-            return true;
-
-        return false;
+        return WhitelistMatcher.ShouldFireUniqueFlagFallback(
+            whitelistOnly: _settings.BossDetection.UseDefaultWhitelistOnly,
+            useUniqueFlag: _settings.BossDetection.UseUniqueFlag,
+            npcIsUnique: (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0,
+            npcHasName: HasName(npc),
+            npcFromTrustedPlugin: IsTrustedPlugin(npc));
     }
 
-    private bool UniqueFlagAllowed(INpcGetter npc)
+    private bool IsTrustedPlugin(INpcGetter npc)
     {
-        if (!_settings.BossDetection.UseDefaultWhitelistOnly) return true;
         if (_trustedModKeys.Count == 0) return true;
         return _trustedModKeys.Contains(npc.FormKey.ModKey.FileName.String);
     }

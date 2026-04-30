@@ -7,12 +7,12 @@ namespace BossGearSynthesis.Settings;
 public class BossDetectionSettings
 {
     [SynthesisSettingName("Use default whitelist only")]
-    [SynthesisTooltip("When on, only NPCs that match the explicit allowlist, named-unique allowlist, race allowlist, keyword allowlist, or EditorID prefix whitelist are patched. Disables broad unique-flag matching so modded named NPCs are not touched.")]
+    [SynthesisTooltip("When on (default), only NPCs that match the explicit allowlist, named-unique allowlist, race allowlist, keyword allowlist, or EditorID prefix whitelist are patched. The unique-flag heuristic is fully disabled in this mode because in Skyrim the 'Unique' flag just means 'one-of-a-kind named NPC' (Lydia, every shopkeeper, every jarl) — it is NOT a boss signal.")]
     public bool UseDefaultWhitelistOnly = true;
 
-    [SynthesisSettingName("Use NPC unique flag")]
-    [SynthesisTooltip("When on, named-unique NPCs are treated as bosses. With 'Use default whitelist only' enabled, this is restricted to NPCs originating from the trusted mod-keys list below so modded named NPCs are not touched.")]
-    public bool UseUniqueFlag = true;
+    [SynthesisSettingName("Use NPC unique flag (only when whitelist-only is OFF)")]
+    [SynthesisTooltip("Broad fallback: when 'Use default whitelist only' is OFF, treat any unique-flagged named NPC from a trusted plugin as a boss. WARNING: this catches every named vanilla NPC including Lydia, shopkeepers, and jarls. Leave off unless you know what you want.")]
+    public bool UseUniqueFlag = false;
 
     [SynthesisSettingName("Source plugins (NPC scan scope)")]
     [SynthesisTooltip("Limit boss detection to NPCs that originate from these plugins. Leave empty to scan ALL loaded plugins (default). Use this to source bosses only from specific overhauls (e.g. OBIS, MorrowLoot) or to keep vanilla-only.")]

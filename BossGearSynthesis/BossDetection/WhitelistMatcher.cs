@@ -37,4 +37,22 @@ public static class WhitelistMatcher
         }
         return false;
     }
+
+    /// <summary>
+    /// Pure truth-table for the broad "unique-flag" boss heuristic. The flag must
+    /// fire ONLY when the user has explicitly disabled whitelist-only mode AND
+    /// opted into the heuristic AND every NPC-side condition is met. Whitelist-only
+    /// mode short-circuits to false because in Skyrim the Unique flag identifies
+    /// every named NPC (shopkeepers, jarls, followers), not just bosses.
+    /// </summary>
+    public static bool ShouldFireUniqueFlagFallback(
+        bool whitelistOnly,
+        bool useUniqueFlag,
+        bool npcIsUnique,
+        bool npcHasName,
+        bool npcFromTrustedPlugin)
+    {
+        if (whitelistOnly) return false;
+        return useUniqueFlag && npcIsUnique && npcHasName && npcFromTrustedPlugin;
+    }
 }

@@ -141,4 +141,63 @@ public class WhitelistCoverageTests
         Assert.False(WhitelistMatcher.IsPluginAllowed("Dawnguard.esm", allow));
         Assert.False(WhitelistMatcher.IsPluginAllowed("OBIS.esp", allow));
     }
+
+    // ---------------------------------------------------------------------
+    // Regression tests for the "every named NPC was tagged" bug.
+    // The Unique flag in Skyrim marks one-of-a-kind named NPCs (Lydia,
+    // Belethor, every jarl) — it is NOT a boss signal. The unique-flag
+    // fallback must therefore stay disabled in whitelist-only mode.
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public void Whitelist_only_mode_blocks_unique_flag_fallback_even_for_unique_named_NPCs()
+    {
+        // Simulates Lydia: Unique flag set, has name, from Skyrim.esm (trusted),
+        // user has whitelist-only enabled.
+        var fired = WhitelistMatcher.ShouldFireUniqueFlagFallback(
+            whitelistOnly: true,
+            useUniqueFlag: true,
+            npcIsUnique: true,
+            npcHasName: true,
+            npcFromTrustedPlugin: true);
+        Assert.False(fired,
+            "Whitelist-only mode must NOT fire the unique-flag fallback; that path catches every named vanilla NPC (Lydia, jarls, shopkeepers).");
+    }
+
+    [Fact]
+    public void Default_settings_disable_unique_flag_pathway()
+    {
+        var defaults = new BossGearSynthesis.Settings.BossDetectionSettings();
+        Assert.True(defaults.UseDefaultWhitelistOnly,
+            "Default must be whitelist-only so the patcher does not tag every named NPC.");
+        Assert.False(defaults.UseUniqueFlag,
+            "Default must disable the broad unique-flag heuristic.");
+
+        // The two defaults combined: with whitelistOnly=true OR useUniqueFlag=false,
+        // the fallback never fires regardless of NPC properties.
+        var fired = WhitelistMatcher.ShouldFireUniqueFlagFallback(
+            whitelistOnly: defaults.UseDefaultWhitelistOnly,
+            useUniqueFlag: defaults.UseUniqueFlag,
+            npcIsUnique: true,
+            npcHasName: true,
+            npcFromTrustedPlugin: true);
+        Assert.False(fired);
+    }
+
+    [Theory]
+    // whitelistOnly, useUniqueFlag, isUnique, hasName, trustedPlugin, expected
+    [InlineData(true,  true,  true,  true,  true,  false)] // whitelist-only short-circuits everything
+    [InlineData(true,  false, true,  true,  true,  false)]
+    [InlineData(false, false, true,  true,  true,  false)] // flag off
+    [InlineData(false, true,  false, true,  true,  false)] // not unique
+    [InlineData(false, true,  true,  false, true,  false)] // no name
+    [InlineData(false, true,  true,  true,  false, false)] // untrusted plugin
+    [InlineData(false, true,  true,  true,  true,  true)]  // power-user opt-in: all conditions met
+    public void Unique_flag_fallback_truth_table(
+        bool whitelistOnly, bool useUniqueFlag, bool isUnique,
+        bool hasName, bool trustedPlugin, bool expected)
+    {
+        Assert.Equal(expected, WhitelistMatcher.ShouldFireUniqueFlagFallback(
+            whitelistOnly, useUniqueFlag, isUnique, hasName, trustedPlugin));
+    }
 }
