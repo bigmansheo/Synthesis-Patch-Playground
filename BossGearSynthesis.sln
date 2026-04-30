@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BossGearSynthesis", "BossGearSynthesis\BossGearSynthesis.csproj", "{21B423F2-798A-42B4-971A-F0D807070BA5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BossGearSynthesis.Tests", "BossGearSynthesis.Tests\BossGearSynthesis.Tests.csproj", "{53BA7CEB-6201-4F96-88AC-BB6A1C46F862}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{21B423F2-798A-42B4-971A-F0D807070BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21B423F2-798A-42B4-971A-F0D807070BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21B423F2-798A-42B4-971A-F0D807070BA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53BA7CEB-6201-4F96-88AC-BB6A1C46F862}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53BA7CEB-6201-4F96-88AC-BB6A1C46F862}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53BA7CEB-6201-4F96-88AC-BB6A1C46F862}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53BA7CEB-6201-4F96-88AC-BB6A1C46F862}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

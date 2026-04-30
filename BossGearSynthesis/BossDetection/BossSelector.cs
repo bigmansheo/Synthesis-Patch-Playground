@@ -50,11 +50,8 @@ public class BossSelector
                      .ThenBy(n => n.FormKey.ID);
     }
 
-    private bool IsFromAllowedPlugin(INpcGetter npc)
-    {
-        if (_pluginSourceAllow.Count == 0) return true;
-        return _pluginSourceAllow.Contains(npc.FormKey.ModKey.FileName.String);
-    }
+    private bool IsFromAllowedPlugin(INpcGetter npc) =>
+        WhitelistMatcher.IsPluginAllowed(npc.FormKey.ModKey.FileName.String, _pluginSourceAllow);
 
     private static HashSet<string> ToModKeySet(IEnumerable<string> values) =>
         new(values.Where(s => !string.IsNullOrWhiteSpace(s)), StringComparer.OrdinalIgnoreCase);
@@ -72,12 +69,8 @@ public class BossSelector
         if (_keywordAllow.Count > 0 && npc.Keywords is { } kws && kws.Any(k => _keywordAllow.Contains(k.FormKey)))
             return true;
 
-        if (_editorIdPrefixes.Length > 0 && npc.EditorID is { } eid)
-        {
-            foreach (var prefix in _editorIdPrefixes)
-                if (eid.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    return true;
-        }
+        if (WhitelistMatcher.MatchesEditorIdPrefix(npc.EditorID, _editorIdPrefixes))
+            return true;
 
         if (_settings.BossDetection.UseUniqueFlag &&
             (npc.Configuration.Flags & NpcConfiguration.Flag.Unique) != 0 &&
