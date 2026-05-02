@@ -1,4 +1,5 @@
 using Mutagen.Bethesda.Plugins;
+using FK = Mutagen.Bethesda.FormKeys.SkyrimSE;
 
 namespace BossGearSynthesis.Defaults;
 
@@ -6,20 +7,20 @@ namespace BossGearSynthesis.Defaults;
 /// Defaults for the curated boss whitelist: generic encounter templates by EditorID prefix,
 /// race FormKeys for slot-less bosses, and base jewelry items used as ring/amulet fallbacks.
 ///
+/// Race / armor / mod-key FormKeys are sourced from Mutagen.Bethesda.FormKeys.SkyrimSE so
+/// they are verified at compile time. The previous version of this file had hand-typed
+/// FormIDs that did not resolve to any record (e.g. an old DragonRace 0x013746 — actual
+/// 0x012E82 — and an old GoldRing 0x000877 — actual 0x01CF2B), which silently broke
+/// race-based and jewelry-fallback matching.
+///
 /// All defaults here are load-order independent:
-/// - EditorID prefixes are case-insensitive string matches that work regardless of plugin position.
-/// - FormKeys are anchored to a plugin filename (e.g. "Skyrim.esm"), so they resolve to the same
-///   record in the user's load order regardless of where the plugin sits.
-/// - Trusted mod keys are matched by filename, not by load-order index.
+/// - EditorID prefixes are case-insensitive string matches.
+/// - FormKeys are anchored to a plugin filename, so they resolve to the same
+///   record regardless of where the plugin sits in the load order.
+/// - Trusted mod keys are filename matches.
 /// </summary>
 public static class BossWhitelistDefaults
 {
-    private static readonly ModKey Skyrim = ModKey.FromNameAndExtension("Skyrim.esm");
-    private static readonly ModKey Dawnguard = ModKey.FromNameAndExtension("Dawnguard.esm");
-    private static readonly ModKey Dragonborn = ModKey.FromNameAndExtension("Dragonborn.esm");
-
-    private static FormKey K(ModKey m, uint id) => new(m, id);
-
     /// <summary>
     /// Case-insensitive EditorID prefixes for vanilla generic encounter bosses on the curated list.
     /// Covers Draugr Overlord/Wight Lord/Scourge Lord/Deathlord/Death Overlord, Bandit Chief,
@@ -88,22 +89,22 @@ public static class BossWhitelistDefaults
 
     /// <summary>
     /// Race FormKeys for slot-less bosses that should still get a fallback ring/amulet.
-    /// Includes Dragon, DwarvenCenturion, Hagraven, and Spriggan races.
+    /// Sourced from Mutagen.Bethesda.FormKeys.SkyrimSE so the FormIDs are guaranteed correct.
     /// </summary>
     public static readonly IReadOnlyList<FormKey> Races = new List<FormKey>
     {
-        K(Skyrim, 0x013746), // DragonRace
-        K(Skyrim, 0x0131F4), // DragonPriestRace
-        K(Skyrim, 0x0131EE), // DwarvenCenturionRace
-        K(Skyrim, 0x013204), // HagravenRace
-        K(Skyrim, 0x0131F0), // SprigganRace
+        FK.Skyrim.Race.DragonRace.FormKey,
+        FK.Skyrim.Race.DragonPriestRace.FormKey,
+        FK.Skyrim.Race.DwarvenCenturionRace.FormKey,
+        FK.Skyrim.Race.HagravenRace.FormKey,
+        FK.Skyrim.Race.SprigganRace.FormKey,
     };
 
-    /// <summary>Vanilla GoldRing armor record - default base for ring fallbacks.</summary>
-    public static readonly FormKey GoldRing = K(Skyrim, 0x000877);
+    /// <summary>Vanilla JewelryRingGold (the basic gold ring) — default base for ring fallbacks.</summary>
+    public static readonly FormKey GoldRing = FK.Skyrim.Armor.JewelryRingGold.FormKey;
 
-    /// <summary>Vanilla GoldNecklace armor record - default base for amulet fallbacks.</summary>
-    public static readonly FormKey GoldNecklace = K(Skyrim, 0x000824);
+    /// <summary>Vanilla JewelryNecklaceGold (the basic gold necklace) — default base for amulet fallbacks.</summary>
+    public static readonly FormKey GoldNecklace = FK.Skyrim.Armor.JewelryNecklaceGold.FormKey;
 
     /// <summary>
     /// Plugin filenames that the unique-flag boss heuristic is allowed to fire on

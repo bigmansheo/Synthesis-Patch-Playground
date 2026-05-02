@@ -1,6 +1,7 @@
 using BossGearSynthesis.BossDetection;
 using BossGearSynthesis.Defaults;
 using Xunit;
+using FK = Mutagen.Bethesda.FormKeys.SkyrimSE;
 
 namespace BossGearSynthesis.Tests;
 
@@ -119,9 +120,48 @@ public class WhitelistCoverageTests
     [Fact]
     public void Named_unique_allowlist_has_a_FormKey_per_dragon_priest_slot()
     {
-        // The list is intentionally hand-curated; we just assert it's non-trivially populated.
-        Assert.True(NamedUniqueAllowlist.FormKeys.Count >= 15,
-            $"Named-unique allowlist should cover the major dragon priests + named uniques. Got {NamedUniqueAllowlist.FormKeys.Count}.");
+        // Allowlist now covers original named uniques + extended vanilla quest bosses
+        // sourced from the user's whitelist (Krev, Fjola, Linwe, Mercer Frey, Ancano, etc.).
+        Assert.True(NamedUniqueAllowlist.FormKeys.Count >= 40,
+            $"Named-unique allowlist should be in the 40+ range after the quest-boss extension. Got {NamedUniqueAllowlist.FormKeys.Count}.");
+    }
+
+    [Fact]
+    public void Named_unique_allowlist_resolves_to_real_records()
+    {
+        // Spot-check that recognizable boss FormKeys actually live in Skyrim/Dawnguard/Dragonborn
+        // (not the dangling values used previously). Any of these would fail to compile if the
+        // FormKey package symbol vanished.
+        Assert.Contains(FK.Skyrim.Npc.MercerFrey.FormKey,                           NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.Ancano.FormKey,                                NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.Linwe.FormKey,                                 NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.dunMistwatchFjola.FormKey,                     NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.dunFolgunthur_MikrulGauldurson.FormKey,        NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.dunShearpointKrosisDragonPriest.FormKey,       NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Skyrim.Npc.MG07LabyrinthianDragonPriest.FormKey,          NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Dawnguard.Npc.DLC1Harkon.FormKey,                         NamedUniqueAllowlist.FormKeys);
+        Assert.Contains(FK.Dragonborn.Npc.DLC2EbonyWarrior.FormKey,                  NamedUniqueAllowlist.FormKeys);
+    }
+
+    [Fact]
+    public void Race_allowlist_resolves_to_real_records()
+    {
+        // The previous file had dangling race FormIDs (e.g. 0x013746 for DragonRace, real value
+        // is 0x012E82). After the rewrite, race-based detection should actually fire.
+        Assert.Contains(FK.Skyrim.Race.DragonRace.FormKey,            BossWhitelistDefaults.Races);
+        Assert.Contains(FK.Skyrim.Race.DragonPriestRace.FormKey,      BossWhitelistDefaults.Races);
+        Assert.Contains(FK.Skyrim.Race.DwarvenCenturionRace.FormKey,  BossWhitelistDefaults.Races);
+        Assert.Contains(FK.Skyrim.Race.HagravenRace.FormKey,          BossWhitelistDefaults.Races);
+        Assert.Contains(FK.Skyrim.Race.SprigganRace.FormKey,          BossWhitelistDefaults.Races);
+    }
+
+    [Fact]
+    public void Jewelry_fallback_FormKeys_resolve_to_real_records()
+    {
+        // The previous file had dangling 0x000877 / 0x000824 values. Real GoldRing /
+        // GoldNecklace FormKeys are 0x01CF2B / 0x0877D5.
+        Assert.Equal(FK.Skyrim.Armor.JewelryRingGold.FormKey,    BossWhitelistDefaults.GoldRing);
+        Assert.Equal(FK.Skyrim.Armor.JewelryNecklaceGold.FormKey, BossWhitelistDefaults.GoldNecklace);
     }
 
     [Fact]
