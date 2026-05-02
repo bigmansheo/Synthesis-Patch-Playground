@@ -12,15 +12,23 @@ public static class WhitelistMatcher
     /// (case-insensitive, ignoring blank prefixes). Returns false for null/empty inputs.
     /// </summary>
     public static bool MatchesEditorIdPrefix(string? editorId, IEnumerable<string> prefixes)
+        => FirstMatchingPrefix(editorId, prefixes) is not null;
+
+    /// <summary>
+    /// Returns the first prefix from <paramref name="prefixes"/> that <paramref name="editorId"/>
+    /// starts with (case-insensitive), or null if none match. Used for logging the matched prefix.
+    /// </summary>
+    public static string? FirstMatchingPrefix(string? editorId, IEnumerable<string> prefixes)
     {
-        if (string.IsNullOrEmpty(editorId)) return false;
+        if (string.IsNullOrEmpty(editorId)) return null;
         foreach (var prefix in prefixes)
         {
             if (string.IsNullOrWhiteSpace(prefix)) continue;
-            if (editorId.StartsWith(prefix.Trim(), StringComparison.OrdinalIgnoreCase))
-                return true;
+            var trimmed = prefix.Trim();
+            if (editorId.StartsWith(trimmed, StringComparison.OrdinalIgnoreCase))
+                return trimmed;
         }
-        return false;
+        return null;
     }
 
     /// <summary>

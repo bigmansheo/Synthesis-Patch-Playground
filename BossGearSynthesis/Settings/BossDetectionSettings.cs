@@ -7,7 +7,7 @@ namespace BossGearSynthesis.Settings;
 public class BossDetectionSettings
 {
     [SynthesisSettingName("Use default whitelist only")]
-    [SynthesisTooltip("When on (default), only NPCs that match the explicit allowlist, named-unique allowlist, race allowlist, keyword allowlist, or EditorID prefix whitelist are patched. The unique-flag heuristic is fully disabled in this mode because in Skyrim the 'Unique' flag just means 'one-of-a-kind named NPC' (Lydia, every shopkeeper, every jarl) — it is NOT a boss signal.")]
+    [SynthesisTooltip("When on (default), heuristic matchers (race, keyword, EditorID prefix, unique-flag) ONLY fire for NPCs originating from a trusted plugin (vanilla + DLC + CC). Modded NPCs that share a vanilla race (e.g. modded dragons) or a vanilla EditorID pattern (e.g. EncBanditChief_MyMod) are NOT touched. The Explicit allowlist and Named-unique allowlist still fire for any plugin so you can opt specific modded bosses in by FormKey.")]
     public bool UseDefaultWhitelistOnly = true;
 
     [SynthesisSettingName("Use NPC unique flag (only when whitelist-only is OFF)")]

@@ -43,14 +43,18 @@ public class Program
         var outfitPatcher = new OutfitPatcher();
         var report = new DryRunReport();
 
-        foreach (var boss in selector.Select())
+        var matches = selector.Select().ToList();
+        report.RecordRejections(selector.RejectedSamples, selector.RejectedCount);
+
+        foreach (var match in matches)
         {
+            var boss = match.Npc;
             var isUnique = selector.IsNamedUnique(boss);
             var profile = analyzer.Analyze(boss, isUnique, state);
-            if (profile is null) { report.Skipped(boss, "no skills resolved"); continue; }
+            if (profile is null) { report.Skipped(match, "no skills resolved"); continue; }
 
             var pick = slotResolver.PickSlot(boss, state);
-            if (pick is null) { report.Skipped(boss, "no eligible outfit slot"); continue; }
+            if (pick is null) { report.Skipped(match, "no eligible outfit slot"); continue; }
 
             var baseArmor = matcher.Choose(pick.Item, pick.Slot, state);
             var primaryMag = MagnitudeFormula.ComputePrimary(profile, settings.MagnitudeScaling);
@@ -58,23 +62,31 @@ public class Program
 
             if (settings.Output.DryRun)
             {
-                report.Patched(boss, profile, resolvedPick, primaryMag);
+                report.Patched(match, profile, resolvedPick, primaryMag);
+                if (settings.Output.VerboseLog) LogMatch(match, profile, primaryMag);
                 continue;
             }
 
             var ench = enchBuilder.Build(state, boss, profile, Suffix(boss));
-            if (ench is null) { report.Skipped(boss, "no MGEF for top combat skill"); continue; }
+            if (ench is null) { report.Skipped(match, "no MGEF for top combat skill"); continue; }
 
             var item = itemBuilder.Build(state, boss, baseArmor, ench, profile, primaryMag);
             outfitPatcher.Apply(state, boss, resolvedPick, item);
-            report.Patched(boss, profile, resolvedPick, primaryMag);
+            report.Patched(match, profile, resolvedPick, primaryMag);
 
-            if (settings.Output.VerboseLog)
-                Console.WriteLine($"[BossGear] {boss.Name?.String ?? boss.EditorID} -> {profile.TopCombatSkill} {primaryMag:F1}");
+            if (settings.Output.VerboseLog) LogMatch(match, profile, primaryMag);
         }
 
         var reportPath = Path.Combine(state.DataFolderPath, settings.Output.ReportFileName);
         try { report.Write(reportPath); } catch { /* best effort */ }
+    }
+
+    private static void LogMatch(BossDetection.BossMatch match, BossStrengthProfile profile, float magnitude)
+    {
+        var name = match.Npc.Name?.String ?? match.Npc.EditorID;
+        var plugin = match.Npc.FormKey.ModKey.FileName.String;
+        var detail = string.IsNullOrEmpty(match.Detail) ? "" : $" [{match.Detail}]";
+        Console.WriteLine($"[BossGear] {name} <{plugin}> via {match.Reason}{detail} -> {profile.TopCombatSkill} {magnitude:F1}");
     }
 
     private static string Suffix(INpcGetter npc) =>

@@ -200,4 +200,35 @@ public class WhitelistCoverageTests
         Assert.Equal(expected, WhitelistMatcher.ShouldFireUniqueFlagFallback(
             whitelistOnly, useUniqueFlag, isUnique, hasName, trustedPlugin));
     }
+
+    // ---------------------------------------------------------------------
+    // Logging support: FirstMatchingPrefix returns the actual prefix string
+    // so the dry-run report can show which prefix fired.
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public void FirstMatchingPrefix_returns_the_matched_prefix_string()
+    {
+        var prefixes = new[] { "EncBanditChief", "EncDraugrOverlord" };
+        Assert.Equal("EncDraugrOverlord",
+            WhitelistMatcher.FirstMatchingPrefix("EncDraugrOverlord01Template", prefixes));
+        Assert.Equal("EncBanditChief",
+            WhitelistMatcher.FirstMatchingPrefix("encbanditchief05", prefixes));
+    }
+
+    [Fact]
+    public void FirstMatchingPrefix_returns_null_when_nothing_matches()
+    {
+        Assert.Null(WhitelistMatcher.FirstMatchingPrefix("Lydia", BossWhitelistDefaults.EditorIdPrefixes));
+        Assert.Null(WhitelistMatcher.FirstMatchingPrefix(null, BossWhitelistDefaults.EditorIdPrefixes));
+        Assert.Null(WhitelistMatcher.FirstMatchingPrefix("", BossWhitelistDefaults.EditorIdPrefixes));
+    }
+
+    [Fact]
+    public void FirstMatchingPrefix_skips_blank_prefixes()
+    {
+        var prefixes = new[] { "", "   ", "EncBanditChief" };
+        Assert.Equal("EncBanditChief",
+            WhitelistMatcher.FirstMatchingPrefix("EncBanditChief01", prefixes));
+    }
 }
