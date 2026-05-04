@@ -37,7 +37,7 @@ public class GearSelectionSettings
     public bool OverwriteEnchanted = false;
 
     [SynthesisSettingName("Prevent disenchantment")]
-    [SynthesisTooltip("When on (default), the generated boss enchantments are flagged so the player cannot extract them at an arcane enchanter. Implemented by pointing the enchantment's BaseEnchantment at itself — the same mechanism vanilla uses for unique gear like Spellbreaker. The Ahzidal piece is always non-disenchantable regardless of this setting.")]
+    [SynthesisTooltip("When on (default), boss gear is hidden from the arcane enchanter's disenchant list AND blocked from disenchantment if forced. Implemented two ways: (1) the patched armor gets the vanilla 'MagicDisallowEnchanting' keyword that excludes it from the disenchant menu — same mechanism as Spellbreaker / Auriel's Bow; (2) the enchantment record's BaseEnchantment is pointed at itself as a backup. The Ahzidal piece is always protected regardless of this setting.")]
     public bool PreventDisenchant = true;
 
     [SynthesisSettingName("Material upgrade mode")]

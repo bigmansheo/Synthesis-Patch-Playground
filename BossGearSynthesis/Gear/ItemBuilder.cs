@@ -4,11 +4,15 @@ using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
+using FK = Mutagen.Bethesda.FormKeys.SkyrimSE;
 
 namespace BossGearSynthesis.Gear;
 
 public class ItemBuilder
 {
+    private static readonly FormKey MagicDisallowEnchantingKeyword =
+        FK.Skyrim.Keyword.MagicDisallowEnchanting.FormKey;
+
     private readonly Settings.Settings _settings;
 
     public ItemBuilder(Settings.Settings settings) { _settings = settings; }
@@ -29,7 +33,27 @@ public class ItemBuilder
         copy.Value = (uint)(copy.Value + bumpUnits * _settings.GearSelection.ValueBumpPer10Magnitude);
 
         copy.Name = RenderName(boss, baseArmor, profile);
+
+        if (_settings.GearSelection.PreventDisenchant)
+            EnsureKeyword(copy, MagicDisallowEnchantingKeyword);
+
         return copy;
+    }
+
+    /// <summary>
+    /// Adds <paramref name="keyword"/> to <paramref name="armor"/>'s keyword list if not
+    /// already present. Skyrim's arcane enchanter excludes any item carrying
+    /// MagicDisallowEnchanting from the disenchant menu (this is what vanilla unique gear
+    /// like Spellbreaker and Auriel's Bow uses), so this is the reliable way to keep
+    /// boss gear off the list — independent of the BaseEnchantment self-pointer trick on
+    /// the ObjectEffect record.
+    /// </summary>
+    private static void EnsureKeyword(Armor armor, FormKey keyword)
+    {
+        armor.Keywords ??= new Noggog.ExtendedList<IFormLinkGetter<IKeywordGetter>>();
+        foreach (var existing in armor.Keywords)
+            if (existing.FormKey == keyword) return;
+        armor.Keywords.Add(new FormLink<IKeywordGetter>(keyword));
     }
 
     private string RenderName(INpcGetter boss, IArmorGetter baseArmor, BossStrengthProfile profile)
