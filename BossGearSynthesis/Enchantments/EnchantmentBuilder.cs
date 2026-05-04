@@ -49,15 +49,21 @@ public class EnchantmentBuilder
         if (second is not null)
             ench.Effects.Add(MakeEffect(second.Value.mgef, second.Value.magnitude));
 
-        if (_settings.AhzidalSpecial.Enabled && boss.FormKey == ResolveAhzidalKey())
+        var isAhzidal = _settings.AhzidalSpecial.Enabled && boss.FormKey == ResolveAhzidalKey();
+        if (isAhzidal)
         {
             var extraMgef = _settings.AhzidalSpecial.ExtraEffectMgef.IsNull
                 ? NamedUniqueAllowlist.FortifyEnchantingMgef
                 : _settings.AhzidalSpecial.ExtraEffectMgef.FormKey;
             ench.Effects.Add(MakeEffect(extraMgef, _settings.AhzidalSpecial.Magnitude));
-            // Pointing BaseEnchantment at self makes the engine refuse to disenchant.
-            ench.BaseEnchantment.SetTo(ench.FormKey);
         }
+
+        // Pointing BaseEnchantment at self makes the engine refuse to disenchant —
+        // same mechanism vanilla uses for Spellbreaker/Aetherial Crown/etc. Ahzidal's
+        // piece is always protected because its extra effect must not enter the
+        // player's enchantment library.
+        if (isAhzidal || _settings.GearSelection.PreventDisenchant)
+            ench.BaseEnchantment.SetTo(ench.FormKey);
 
         return ench;
     }

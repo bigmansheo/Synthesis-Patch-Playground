@@ -36,6 +36,10 @@ public class GearSelectionSettings
     [SynthesisTooltip("If false, slots whose item already has an enchantment are skipped.")]
     public bool OverwriteEnchanted = false;
 
+    [SynthesisSettingName("Prevent disenchantment")]
+    [SynthesisTooltip("When on (default), the generated boss enchantments are flagged so the player cannot extract them at an arcane enchanter. Implemented by pointing the enchantment's BaseEnchantment at itself — the same mechanism vanilla uses for unique gear like Spellbreaker. The Ahzidal piece is always non-disenchantable regardless of this setting.")]
+    public bool PreventDisenchant = true;
+
     [SynthesisSettingName("Material upgrade mode")]
     public MaterialUpgradeMode MaterialUpgrade = MaterialUpgradeMode.Off;
 
